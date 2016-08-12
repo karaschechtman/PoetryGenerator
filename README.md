@@ -8,7 +8,9 @@ Goals
 1. Create grammatically intelligible poems that match those forms
 2. Given a user-provided plot or theme, and a user-selected verse form, generate metrically correct poetry that matches the plot or theme. 
 3. Train on real poetry to generate poetry that matches time period, genre, etc.
+4. Potential addition of other languages (could be useful for translation of poems that would have gone untranslated otherwise) 
+
 Files
 -----
-- generatepoem.py - my poem generator class. Right now, upon running will generate 5 lines of nonsensical, nongrammatical blank verse; specific verse forms to come soon
+- generatepoem.py - my poem generator class. Right now, upon running will generate as a demo, a line of nonsensical, nongrammatical blank verse; specific verse forms to come soon
 - cmudict.rep.txt - from https://webdocs.cs.ualberta.ca/~kondrak/cmudict.html
