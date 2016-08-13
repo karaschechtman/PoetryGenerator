@@ -2,10 +2,32 @@ import random
 
 class PoetryGenerator:
     def __init__(self,dictionary):
+        self.forms = {}
+        self.syllables = {}
+        self.meter = Dictlist()
+        self.rhymes = Dictlist()
+
+
+        # save all the forms
+        formlist = open('FORMS.txt', 'r')
+        formlines = [line for line in formlist.readlines()]
+        for form in formlines:
+            tokens = form.split("|")
+            poem = []
+            key = tokens[0].strip()
+            for token in tokens[1:]:
+                lines = token.split("/")
+                stanza = []
+                for line in lines:
+                    line = line.strip()
+                    stanza.append([line.split(" ")[0],line.split(" ")[1]])
+
+                poem.append(stanza)
+            self.forms[key] = poem
+
+        # generate the syllable list
         dictionaryfile = open(dictionary,'r')
         lines = [line for line in dictionaryfile.readlines() if line[0].isalpha()]
-
-        self.syllables = {}
 
         for line in lines:
             word = ''.join([char for char in line.split('  ')[0] if char.isalpha()])
@@ -14,13 +36,12 @@ class PoetryGenerator:
             markedsyllables = self._getstress_(syllablelist)
             self.syllables[word] = markedsyllables
 
-        self.meter = Dictlist()
-
+        # generate the meters Dictlist
         for word in self.syllables:
             marked = self.syllables[word]
             self.meter[self._getpattern_(marked)] = word
 
-        self.rhymes = Dictlist()
+        # generate the rhymes Dictlist
         for word in self.syllables:
             marked = self.syllables[word]
             self.rhymes[self._getrhymepattern_(marked)] = word
@@ -77,14 +98,77 @@ class PoetryGenerator:
         return rhymepattern[mystart:]
 
     def match_pattern(self,pattern):
-        return random.choice(self.meter[pattern])
+        return self.meter[pattern]
 
     def rhymefinder(self, word):
         rhymepattern = self._getrhymepattern_(self.syllables[word])
-        return random.choice(self.rhymes[rhymepattern])
+        return self.rhymes[rhymepattern]
 
+    def generate_line(self,linescheme,mapping):
+        meter = linescheme[0]
+        rhyme = linescheme[1]
+        self.metertokenize()
 
+    @staticmethod
+    def totokens(metertoken):
+        i = 0
+        tokens = []
+        syllable = PoetryGenerator.generatesyllable()
+        while i + syllable < (len(metertoken)):
+            word = metertoken[i:i+syllable]
+            tokens.append(word)
+            i+=syllable
+            syllable = PoetryGenerator.generatesyllable()
 
+        if i < len(metertoken):
+            word = metertoken[i:]
+            tokens.append(word)
+        return tokens
+
+    @staticmethod
+    def generatesyllable():
+        number = random.choice(range(100))
+        syllable = 0
+        if number < 50:
+            syllable = 1
+        else:
+            syllable = 2
+        return syllable
+
+    def generate_poem(self,poemtype):
+        scheme = self.forms[poemtype]
+        rhymemapping = Dictlist()
+
+        print '\nA ' + poemtype
+        print '-------------------------------------- \n'
+        for stanza in scheme:
+            for line in stanza:
+                wordmeter = PoetryGenerator.totokens(line[0])
+                textline = ''
+                rhymekey = line[1]
+
+                for i, word in enumerate(wordmeter):
+                    if i == len(wordmeter)-1:
+                        meterset = set(self.match_pattern(word))
+                        if (rhymekey in rhymemapping):
+                            rhymeset = set(self.rhymefinder(random.choice(rhymemapping[rhymekey])))
+                        else:
+                            matchfound = False
+                            while (matchfound != True):
+                                newrhyme = random.choice(list(meterset))
+                                rhymeset = set(self.rhymefinder(newrhyme))
+                                overlaps = rhymeset.intersection(meterset)
+                                if (len(overlaps) > 0):
+                                    matchfound = True
+
+                        finalword = random.choice(list(rhymeset.intersection(meterset)))
+                        rhymemapping[rhymekey] = finalword
+                        textline += finalword
+                    else:
+                        textline += random.choice(self.match_pattern(word)) + ' '
+                print textline
+
+            print ''
 class Dictlist(dict):
     def __setitem__(self, key, value):
         try:
@@ -97,15 +181,10 @@ class Dictlist(dict):
 def main():
     generator = PoetryGenerator('cmudict.rep.txt')
 
-    print 'generating a line of blank verse: '
-    print generator.match_pattern('01'), generator.match_pattern('01'), generator.match_pattern('01'), generator.match_pattern('01'), generator.match_pattern('01')
+    print 'Generating a line of blank verse: '
+    print random.choice(generator.match_pattern('01')), random.choice(generator.match_pattern('01')), random.choice(generator.match_pattern('01')), random.choice(generator.match_pattern('01')), random.choice(generator.match_pattern('01'))
 
-    print 'finding rhyme for word PEAR:'
-    print generator.rhymefinder('PEAR')
-
-
-    print 'finding rhyme for word ORANGE: (will return itself)'
-    print generator.rhymefinder('ORANGE')
+    generator.generate_poem('ELIZABETHAN-SONNET')
 
 
 main()
